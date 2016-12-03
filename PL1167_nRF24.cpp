@@ -10,11 +10,12 @@
 static uint16_t calc_crc(uint8_t *data, size_t data_length);
 static uint8_t reverse_bits(uint8_t data);
 static void demangle_packet(uint8_t *in, uint8_t *out) ;
+//#define DEBUG_PRINTF
 
 PL1167_nRF24::PL1167_nRF24(RF24 &radio)
   : _radio(radio) { }
 
-static const uint8_t pipe[] = {0xd1, 0x28, 0x5e, 0x55, 0x55};
+static const uint8_t pipe[] = {0x90, 0x4E, 0x6C, 0x55, 0x55};
 
 int PL1167_nRF24::open()
 {
@@ -189,7 +190,6 @@ int PL1167_nRF24::transmit(uint8_t channel)
       return retval;
     }
   }
-
   _radio.stopListening();
   uint8_t tmp[sizeof(_packet)];
 
@@ -234,7 +234,7 @@ int PL1167_nRF24::transmit(uint8_t channel)
   if (_crc) {
     crc = calc_crc(_packet, _packet_length);
   }
-
+  crcprint=crc;
   buffer = trailer >> (8 - (_trailerLength % 8));
   buffer_fill = _trailerLength % 8;
   for (int inp = 0; inp < _packet_length + (_crc ? 2 : 0) + 1; inp++) {
@@ -352,6 +352,7 @@ int PL1167_nRF24::internal_receive()
     if ( ((crc & 0xff) != tmp[outp - 2]) || (((crc >> 8) & 0xff) != tmp[outp - 1]) ) {
       return 0;
     }
+    crcprint = crc;
     outp -= 2;
   }
 
