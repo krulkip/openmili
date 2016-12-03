@@ -1,13 +1,13 @@
 #include <SPI.h>
 #include <nRF24L01.h>
-#include <RF24.h>
-#include <printf.h>
-
+#include <RF24.h> //http://tmrh20.github.io/RF24/
 #include "PL1167_nRF24.h"
 #include "MiLightRadio.h"
 
-#define CE_PIN 8
-#define CSN_PIN 53
+// define connection pins for nRF24L01 shield on www.arduino-projects4u.com
+#define CE_PIN 9
+#define CSN_PIN 10
+
 
 RF24 radio(CE_PIN, CSN_PIN);
 PL1167_nRF24 prf(radio);
@@ -16,7 +16,7 @@ MiLightRadio mlr(prf);
 void setup()
 {
   Serial.begin(115200);
-  printf_begin();
+  Serial.println();
   delay(1000);
   Serial.println("# OpenMiLight Receiver/Transmitter starting");
   mlr.begin();
@@ -24,11 +24,12 @@ void setup()
 
 
 static int dupesPrinted = 0;
-static bool receiving = false;
+static bool receiving = true; //set receiving true or false
 static bool escaped = false;
-static uint8_t outgoingPacket[7];
+static uint8_t outgoingPacket[9];
 static uint8_t outgoingPacketPos = 0;
 static uint8_t nibble;
+uint8_t crc;
 static enum {
   IDLE,
   HAVE_NIBBLE,
@@ -39,19 +40,29 @@ void loop()
 {
   if (receiving) {
     if (mlr.available()) {
-      printf("\n");
-      uint8_t packet[7];
+      uint8_t packet[9];
       size_t packet_length = sizeof(packet);
+      Serial.println();//     printf("\n");
+      Serial.print("<-- ");
+      if (packet_length<0x10) Serial.print("0");
+      Serial.print(packet_length,HEX);// printf("%02X ", packet_length);
+      Serial.print(" ");     
       mlr.read(packet, packet_length);
 
       for (int i = 0; i < packet_length; i++) {
-        printf("%02X ", packet[i]);
+        if (packet[i]<0x10) Serial.print("0");
+        Serial.print(packet[i],HEX);// printf("%02X ", packet[i]);
+        Serial.print(" ");
       }
+      if ((prf.crcprint>>8)<0x10) Serial.print("0");    
+      Serial.print(prf.crcprint>>8,HEX);
+      if ((prf.crcprint&0xFF)<0x10) Serial.print("0");
+      Serial.print(prf.crcprint&0xFF,HEX);
+      Serial.print(" ");    
     }
-
     int dupesReceived = mlr.dupesReceived();
     for (; dupesPrinted < dupesReceived; dupesPrinted++) {
-      printf(".");
+    Serial.print(".");//      printf(".");
     }
   }
 
@@ -85,6 +96,7 @@ void loop()
             }
             if (outgoingPacketPos >= sizeof(outgoingPacket)) {
               state = COMPLETE;
+              //Serial.println("\nCOMPLETE");
             } else {
               state = IDLE;
             }
@@ -101,13 +113,29 @@ void loop()
           case '.':
             if (state == COMPLETE) {
               mlr.write(outgoingPacket, sizeof(outgoingPacket));
+              Serial.print("\n--> ");
+              if (sizeof(outgoingPacket)<0x10) Serial.print("0");              
+              Serial.print(sizeof(outgoingPacket),HEX);
+              Serial.print(" ");
+              for (int i=0; i<sizeof(outgoingPacket);i++){
+              if (outgoingPacket[i]<0x10) Serial.print("0");
+              Serial.print(outgoingPacket[i],HEX);
+              Serial.print(" ");
+              }
+              if ((prf.crcprint>>8)<0x10) Serial.print("0");    
+              Serial.print(prf.crcprint>>8,HEX);
+              if ((prf.crcprint&0xFF)<0x10) Serial.print("0");
+              Serial.print(prf.crcprint&0xFF,HEX);
+              Serial.print(" ");
             }
             if(inChar != ' ') {
               outgoingPacketPos = 0;
+
               state = IDLE;
             }
             if (inChar == '.') {
               mlr.resend();
+              Serial.print(".");
               delay(1);
             }
             break;
