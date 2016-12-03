@@ -28,7 +28,9 @@ class PL1167_nRF24 : public AbstractPL1167 {
     int transmit(uint8_t channel);
     int receive(uint8_t channel);
     int readFIFO(uint8_t data[], size_t &data_length);
-
+    uint16_t crcprint = 0;
+    uint8_t _nrf_pipe[5];
+    
   private:
     RF24 &_radio;
 
@@ -37,11 +39,11 @@ class PL1167_nRF24 : public AbstractPL1167 {
     uint16_t _syncword0 = 0, _syncword3 = 0;
     uint8_t _syncwordLength = 4;
     uint8_t _trailerLength = 4;
-    uint8_t _maxPacketLength = 8;
+    uint8_t _maxPacketLength = 10;
 
     uint8_t _channel = 0;
 
-    uint8_t _nrf_pipe[5];
+
     uint8_t _nrf_pipe_length;
 
     uint8_t _packet_length = 0;
