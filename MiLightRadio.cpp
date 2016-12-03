@@ -9,7 +9,7 @@
 
 #define PACKET_ID(packet) ( ((packet[1] & 0xF0)<<24) | (packet[2]<<16) | (packet[3]<<8) | (packet[7]) )
 
-static const uint8_t CHANNELS[] = {9, 40, 71};
+static const uint8_t CHANNELS[] = {8, 39, 70};
 #define NUM_CHANNELS (sizeof(CHANNELS)/sizeof(CHANNELS[0]))
 
 MiLightRadio::MiLightRadio(AbstractPL1167 &pl1167)
@@ -39,12 +39,12 @@ int MiLightRadio::begin()
     return retval;
   }
 
-  retval = _pl1167.setSyncword(0x147A, 0x258B);
+  retval = _pl1167.setSyncword(0x7236, 0x1809);
   if (retval < 0) {
     return retval;
   }
 
-  retval = _pl1167.setMaxPacketLength(8);
+  retval = _pl1167.setMaxPacketLength(10);
   if (retval < 0) {
     return retval;
   }
@@ -113,10 +113,8 @@ int MiLightRadio::write(uint8_t frame[], size_t frame_length)
   if (frame_length > sizeof(_out_packet) - 1) {
     return -1;
   }
-
   memcpy(_out_packet + 1, frame, frame_length);
   _out_packet[0] = frame_length;
-
   int retval = resend();
   if (retval < 0) {
     return retval;
