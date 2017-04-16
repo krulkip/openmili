@@ -6,3 +6,5 @@ This one allows the automatic switching between keywords, channels and length of
 This version includes the new RGB + CCT remotes alswell as the older CCT, RGBW and RGB remotes.
 
 https://raw.githubusercontent.com/krulkip/openmili/multiremote/Capture.PNG
+
+![alt tag](https://raw.githubusercontent.com/krulkip/openmili/multiremote/Capture.PNG)
